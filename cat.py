@@ -3,7 +3,7 @@ import argparse
 def main():
     parser = argparse.ArgumentParser(description="Cryptographic Analysis Tool (CAT) - Part of the ASTRA Ecosystem")
     
-    # Defining the CLI arguments
+    # Defining our main CLI arguments
     parser.add_argument("--encrypt", "-e", dest="encrypt", help="Initiates the encryption process.")
     parser.add_argument("--decrypt", "-d", dest="decrypt", help="Initiates the decryption process.")
     parser.add_argument("--analyze", "-a", dest="analyze", help="Analyzes the cryptographic strength of the file.")
@@ -18,24 +18,21 @@ def main():
 
     args = parser.parse_args()
 
-    # Handling the CLI calls
+    # Handling our CLI calls
     if args.encrypt:
         print(f"Encrypting file at {args.encrypt}")
-        # Add encryption logic here
+        # we will add encryption logic here
 
     if args.decrypt:
         print(f"Decrypting file at {args.decrypt} using keyfile {args.keyfile}")
-        # Add decryption logic here
+        # we will add encryption logic here
 
     if args.analyze:
         print(f"Analyzing cryptographic strength of {args.analyze}")
-        # Add analysis logic here
+        # we will add encryption logic here
 
     if args.output:
         print(f"Output will be saved to {args.output}")
-        # Add logic to specify output file
+        # we will add encryption logic here
 
-    # Add logic for other arguments as necessary
-
-if __name__ == "__main__":
-    main()
+    # we will add logic for other arguments as necessary
