@@ -5,7 +5,7 @@ def main():
     parser = argparse.ArgumentParser(prog='fat', description='Flow Analysis Tool (F.A.T.)')
     
     # Define global options
-    parser.add_argument('--version', action='version', version='%(prog)s 2.0')
+    parser.add_argument('--version', action='version', version='0.0.1')
 
     # Create subparsers for the different commands
     subparsers = parser.add_subparsers(dest='command', help='commands')
@@ -45,14 +45,30 @@ def main():
 
 def handle_analyze(args):
     # Implement the analysis logic here
+    # This will be used in B.A.T. for bloatware analysis
+
+    # Dependencies can consist of function parameters, anything that's passed by reference as that means it could change and isn't
+    # under the complete control of where it's passed (think dependency injection)
+
+    # Scan through root directory of reconstructed project
+    # Scan functions and classes line by line, see what functions are called and where,
+    # have a data structure that maps each function to its dependencies
+
+    # Outline clusters as well which could hint at isolated systems that aren't tied to ancestry (also side effect of dependency injection)
+
+    # Use case:
+        # In C2, the other team used very bloated R-B trees that didn't have much functionality aside from
+        # wasting our time in the static analysis. Something like this would tell us the Trees and Nodes are isolated,
+
     print(f"Analyzing {args.path}")
-    
+
 
 def handle_generate_uml(args):
     # Implement the UML generation logic here
+    # This should be trivial
     print(f"Generating UML for {args.path}")
 
-
+    
 def handle_dependencies(args):
     # Implement the dependencies handling logic here
     print(f"Analyzing dependencies for {args.path}")
