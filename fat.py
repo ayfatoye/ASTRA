@@ -28,8 +28,6 @@ def main():
     dependencies_parser = subparsers.add_parser('dependencies', aliases=['d'], help='Analyze and show dependencies')
     dependencies_parser.add_argument('path', help='Path to the source code root directory')
 
-    # Help command is automatically added by argparse
-
     # Parse the arguments
     args = parser.parse_args()
     
@@ -61,16 +59,16 @@ def handle_analyze(args):
         # wasting our time in the static analysis. Something like this would tell us the Trees and Nodes are isolated,
 
     print(f"Analyzing {args.path}")
-
+    
 
 def handle_generate_uml(args):
     # Implement the UML generation logic here
-    # This should be trivial
     print(f"Generating UML for {args.path}")
 
-    
+
 def handle_dependencies(args):
-    # Implement the dependencies handling logic here
+    # Dependencies handling logic here
     print(f"Analyzing dependencies for {args.path}")
-    
-	
+
+if __name__ == "__main__":
+    main()
