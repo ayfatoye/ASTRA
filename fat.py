@@ -28,8 +28,6 @@ def main():
     dependencies_parser = subparsers.add_parser('dependencies', aliases=['d'], help='Analyze and show dependencies')
     dependencies_parser.add_argument('path', help='Path to the source code root directory')
 
-    # Help command is automatically added by argparse
-
     # Parse the arguments
     args = parser.parse_args()
     
@@ -44,17 +42,16 @@ def main():
         parser.print_help()
 
 def handle_analyze(args):
-    # Implement the analysis logic here
+    # Analysis logic here
     print(f"Analyzing {args.path}")
-    
 
 def handle_generate_uml(args):
-    # Implement the UML generation logic here
+    # UML generation logic here
     print(f"Generating UML for {args.path}")
 
-
 def handle_dependencies(args):
-    # Implement the dependencies handling logic here
+    # Dependencies handling logic here
     print(f"Analyzing dependencies for {args.path}")
-    
-	
+
+if __name__ == "__main__":
+    main()
