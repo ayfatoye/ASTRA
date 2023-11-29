@@ -30,3 +30,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# Usage: python bat.py --analyze "C:\Users\Sebastian\Desktop\ASTRA\test\main" --output "output.json" --ghidra "C:\Users\Sebastian\Desktop\ghidra_10.3.3_PUBLIC"
