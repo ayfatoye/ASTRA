@@ -3,17 +3,31 @@ import subprocess
 import os
 
 def run_ghidra_analysis(binary_path, output_path, ghidra_path, ghidra_script_path):
-    # Ensure the output directory exists
+    # Resolve output path to an absolute path
+    output_path = os.path.abspath(output_path)
+
+    # Check if the output directory is empty
     output_dir = os.path.dirname(output_path)
-    if output_dir and not os.path.exists(output_dir):
-        os.makedirs(output_dir, exist_ok=True)
+    if not output_dir:
+        output_dir = '.'
 
-    # Construct the Ghidra headless command
-    headless_command = f"\"{ghidra_path}\\support\\analyzeHeadless\" {ghidra_path} temp_project -import \"{binary_path}\" -postScript \"{ghidra_script_path}\" -deleteProject -readOnly"
+    # Ensure output directory exists
+    os.makedirs(output_dir, exist_ok=True)
 
-    # Run the command
-    subprocess.run(headless_command, shell=True)
-    print(f"Call graph exported to {output_path}")
+    # Running Ghidra in headless mode
+    headless_command = [
+        os.path.join(ghidra_path, "support", "analyzeHeadless"),
+        ghidra_path,  # Ghidra project directory
+        "temp_project",  # Temporary project name
+        "-import", binary_path,
+        "-postScript", ghidra_script_path,
+        "-scriptPath", os.path.dirname(ghidra_script_path),
+        "-deleteProject",
+        "-readOnly"
+    ]
+
+    subprocess.run(headless_command)
+    print("Call graph exported to {}".format(output_path))
 
 def main():
     parser = argparse.ArgumentParser(description='Binary Analysis Tool')
@@ -30,5 +44,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# Usage: python bat.py --analyze "C:\Users\Sebastian\Desktop\ASTRA\test\main" --output "output.json" --ghidra "C:\Users\Sebastian\Desktop\ghidra_10.3.3_PUBLIC"
