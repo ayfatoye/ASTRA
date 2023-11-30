@@ -1,85 +1,116 @@
-# code analysis tool
-
-'''
-	planned:
-		- show globals
-        
-		goes through every file .gc and .gh file in a directory 1 by 1
-
-			first pass through every file:
-				- creates id for methods and namespaced methods: (eg. class-[CLASSNAME] :: function-[FUNCTION_INFO] or if not namespaced: function-[FUNCTION_INFO])
-
-			second pass thru every file:
-				- for each one, it makes a list of any other function calls within that function (list of dependencies for each fn)
-
-		use argparse to take a path to directory
-'''
-
-import os
+import re
 import argparse
-import re
 
-def parse_file(file_path):
-    # Function to parse a single file and extract methods and dependencies
-    methods = {}
-    
+# Regular expression pattern to match function signatures
+fn_pattern = re.compile(r'\w+\s+\**?(__thiscall\s+)?\n*([\w:<>~]+)\s*\(.*')
+ns_pattern = re.compile(r'([^:]+)(?:::|$)')
+
+def get_fn_ln_info(file_path):
+    fns = []
+    lns = []
+    done = {}
+
     with open(file_path, 'r') as file:
-        content = file.readlines()
+        lines = file.readlines()
 
-        current_method = None
-        for line in content:
-            method_match = re.match(r"method definition regex", line)
-            if method_match:
-                current_method = method_match.group(1)  # or appropriate group based on regex
-                methods[current_method] = {'dependencies': set()}
-                continue
+    for ln, line in enumerate(lines):
+        if ln < len(lines) - 1:
+            line = line + lines[ln + 1]
 
-            # Check for function calls within a method and add them to dependencies
-            if current_method:
-                call_match = re.findall(r"function call regex", line)
-                if call_match:
-                    methods[current_method]['dependencies'].update(call_match)
+        if ln < len(lines) - 2:
+            line = line + lines[ln + 2]
 
-    return methods
+        match = fn_pattern.search(line)
 
-def scan_directory(directory):
-    all_methods = {}
+        if match:
+            fn = match.group(2)
+
+            if not fn in done:
+                fns.append(fn)
+                lns.append(ln)
+                done[fn] = True
+
+    return fns, lns, len(lns), lines
+
+def get_ns_info(signature):
+    return ns_pattern.findall(signature)
+
+def get_deps_info(file_path):
+    fns, lns, n, lines = get_fn_ln_info(file_path)
+    fn_deps = {fn: [] for fn in fns}
+    fn_uses = {fn: [] for fn in fns}
     
-    for filename in os.listdir(directory):
-        if filename.endswith('.gc') or filename.endswith('.gh'):
-            file_path = os.path.join(directory, filename)
-            methods = parse_file(file_path)
-            all_methods.update(methods)
-            
-    return all_methods
+    for i in range(n):
+        ln = lns[i]
+        fn = fns[i]
 
-import re
+        fn_ns_info = get_ns_info(fn)
+        
+        start_idx = ln + 3
+        end_idx = (lns[i + 1] if i != n - 1 else len(lines)) - 4
 
-def parse_c_code(text):
-    # Regular expression to find function definitions
-    function_pattern = re.compile(r'\w+\s+\**(__thiscall)?\s*(\w+::)?(\w+)\(')
-    functions = {}
+        for line in lines[start_idx:end_idx]:
+            for other_fn in fns:
+                other_fn_ns_info = get_ns_info(other_fn)
+                
+                if (other_fn + "(") in line or (other_fn_ns_info[:-1] == fn_ns_info[:-1] and (other_fn_ns_info[-1] + "(") in line):
+                    if not other_fn in fn_deps[fn]:
+                        fn_deps[fn].append(other_fn)
 
-    # Find all matches in the text
-    for match in function_pattern.finditer(text):
-        # Construct the function name, including namespace if present
-        function_name = match.group(2) + match.group(3) if match.group(2) else match.group(3)
-        functions[function_name] = []
+                    if not fn in fn_uses[other_fn]:
+                        fn_uses[other_fn].append(fn)
 
-    return functions
+    return fn_deps, fn_uses
+
+def fns_cmd(file_path):
+    fns, lns, _, _ = get_fn_ln_info(file_path)
+    
+    for fn in fns:
+        print(fn) 
+
+def deps_cmd(file_path):
+    fn_deps, _ = get_deps_info(file_path)
+
+    for fn, deps in fn_deps.items():
+        if deps:
+            print(fn + ":")
+            for dep in deps:
+                print("---->", dep)
+            print()
+        
+
+def idc_cmd(file_path):
+    _, fn_uses = get_deps_info(file_path)
+
+    for fn, uses in fn_uses.items():
+        if not uses:
+            print(fn)
 
 def main():
-    parser = argparse.ArgumentParser(description="Code Analysis Tool")
-    parser.add_argument("directory", help="Path to the directory to scan")
+    parser = argparse.ArgumentParser(description='C file analysis tool.')
+    subparsers = parser.add_subparsers(dest='command')
+
+    # Subparser for 'fns' command
+    parser_dep = subparsers.add_parser('fns', help='Find function names in a decompiled c/cpp file exported from Ghidra')
+    parser_dep.add_argument('file_path', type=str, help='Path to the c/cpp file')
+
+    # Subparser for 'dep' command
+    parser_dep = subparsers.add_parser('deps', help='Find function dependencies in a decompiled c/cpp file exported from Ghidra')
+    parser_dep.add_argument('file_path', type=str, help='Path to the c/cpp file')
+
+    # Subparser for 'dead_code' command
+    parser_dead_code = subparsers.add_parser('idc', help='Identify dead code in a decompiled c/cpp file exported from Ghidra')
+    parser_dead_code.add_argument('file_path', type=str, help='Path to the c/cpp file')
+
+    # Parse the arguments
     args = parser.parse_args()
 
-    directory = args.directory
-    all_methods = scan_directory(directory)
-    
-    for method, info in all_methods.items():
-        print(f"Method: {method}, Dependencies: {info['dependencies']}")
+    if args.command == 'fns':
+        fns_cmd(args.file_path)
+    elif args.command == 'deps':
+        deps_cmd(args.file_path)
+    elif args.command == 'idc':
+        idc_cmd(args.file_path)
 
 if __name__ == "__main__":
     main()
-
-
